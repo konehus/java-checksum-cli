@@ -27,10 +27,6 @@ import java.io.IOException;
 
 public class CheckSumCLI {
 
-    // private static final String PROGRAM_NAME = "sum";
-    // private static final String[] AUTHORS = {"Henok Haile"};
-    // private static final String VERSION = "1.0";
-
     public static void main(String[] args) {
         CheckSumCLI cli = new CheckSumCLI();
         cli.run(args);

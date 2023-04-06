@@ -35,5 +35,8 @@ build/
 ### VS Code ###
 .vscode/
 
+### Log File ###
+log.txt
+
 ### Mac OS ###
 .DS_Store

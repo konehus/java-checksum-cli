@@ -1,34 +1,41 @@
 package com.aries.log;
 
-import com.aries.utility.ChecksumUtility;
+import com.aries.utility.ByteSizeFormatter;
+import com.aries.utility.StringUtility;
+import com.aries.utility.TextColoring;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.Locale;
 
 public class ChecksumLogger {
 
+    private static final LogFileWriter logFileWriter = new LogFileWriter("../log.txt");
+
     public static void log(Path path, String algorithm, int checksum, long blockSize, long totalBytes, String fileType, double elapsedSeconds) throws IOException {
-        String fileSize = ChecksumUtility.humanReadableByteCountSI(totalBytes);
+        String fileSize = ByteSizeFormatter.humanReadableByteCountSI(totalBytes);
         Instant end = Instant.now();
         String gitRevision = getGitRevision();
 
-        String header = String.format(Locale.ROOT, "%-24s %-20s %-10s %-20s %-11s %-10s %-12s %-42s %s%n", "Timestamp", "File", "Size", "Type", "Algorithm", "Checksum", "BlockSize", "GitRevision", "ElapsedTime");
-        String log = String.format(Locale.ROOT, "\033[1;34m%-24s\033[0m \033[1;32m%-20s\033[0m \033[1;33m%-10s\033[0m \033[1;35m%-20s\033[0m \033[1;36m%-11s\033[0m \033[1;31m%-10d\033[0m \033[1;31m%-12d\033[0m \033[1;37m%-42s\033[0m \033[1;37m%.2f seconds\033[0m%n",
-                end, path.getFileName(), fileSize, fileType, algorithm, checksum, blockSize, gitRevision, elapsedSeconds);
+        String header = StringUtility.formatWithLocale("%-24s %-20s %-10s %-20s %-11s %-10s %-12s %-42s %s%n", "Timestamp", "File", "Size", "Type", "Algorithm", "Checksum", "BlockSize", "GitRevision", "ElapsedTime");
+        String log = StringUtility.formatWithLocale("%-24s %-20s %-10s %-20s %-11s %-10s %-12s %-42s %s%n",
+                TextColoring.cyan(String.format("%-24s", end)),
+                TextColoring.green(String.format("%-20s", path.getFileName())),
+                TextColoring.yellow(String.format("%-10s", fileSize)),
+                TextColoring.purple(String.format("%-20s", fileType)),
+                TextColoring.blue(String.format("%-11s", algorithm)),
+                TextColoring.red(String.format("%-10d", checksum)),
+                TextColoring.red(String.format("%-12d", blockSize)),
+                TextColoring.white(String.format("%-42s", gitRevision)),
+                TextColoring.white(String.format("%.2f seconds", elapsedSeconds))
+        );
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("../log.txt", true))) {
-            if (isNewLogFile()) {
-                writer.write(header);
-            }
-            writer.write(log);
+        if (logFileWriter.isEmpty()) {
+            logFileWriter.write(header);
         }
-    }
-
-    private static boolean isNewLogFile() {
-        File logFile = new File("../log.txt");
-        return logFile.length() == 0;
+        logFileWriter.write(log);
     }
 
     private static String getGitRevision() {

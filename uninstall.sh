@@ -4,7 +4,7 @@
 mvn clean
 
 # Locate the JAR file after building
-jar_file=$(find target -name "*.jar" -type f)
+jar_file=$(find target -name "*.jar" -type f 2> /dev/null)
 
 # Remove the JAR file from the bin directory
 bin_dir="$HOME/bin"

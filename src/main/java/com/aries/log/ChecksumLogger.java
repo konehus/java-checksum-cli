@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 public class ChecksumLogger {
 
@@ -19,9 +21,12 @@ public class ChecksumLogger {
         Instant end = Instant.now();
         String gitRevision = getGitRevision();
 
-        String header = StringUtility.formatWithLocale("%-24s %-20s %-10s %-20s %-11s %-10s %-12s %-42s %s%n", "Timestamp", "File", "Size", "Type", "Algorithm", "Checksum", "BlockSize", "GitRevision", "ElapsedTime");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        String header = StringUtility.formatWithLocale("%-24s %-20s %-10s %-20s %-11s %-10s %-12s %-42s %s%n",
+                "Timestamp", "File", "Size", "Type", "Algorithm", "Checksum", "BlockSize", "GitRevision", "ElapsedTime");
         String log = StringUtility.formatWithLocale("%-24s %-20s %-10s %-20s %-11s %-10s %-12s %-42s %s%n",
-                TextColoring.cyan(String.format("%-24s", end)),
+                TextColoring.cyan(String.format("%-24s", formatter.format(end.atZone(ZoneId.of("America/New_York"))))),
                 TextColoring.green(String.format("%-20s", path.getFileName())),
                 TextColoring.yellow(String.format("%-10s", fileSize)),
                 TextColoring.purple(String.format("%-20s", fileType)),

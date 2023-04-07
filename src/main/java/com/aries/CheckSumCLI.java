@@ -4,16 +4,6 @@
  *
  * Copyright (C) 2023 Aries
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
  * Copy of the GNU General Public License, see <https://www.gnu.org/licenses/>.
  */
 
@@ -27,49 +17,53 @@ import java.io.IOException;
 
 public class CheckSumCLI {
 
-    public static void main(String[] args) {
-        CheckSumCLI cli = new CheckSumCLI();
-        cli.run(args);
-    }
+    private static final String USAGE = "Usage: java ChecksumCLI [OPTION]... [FILE]...\n" +
+            "  -r      use BSD sum algorithm, use 1K blocks\n" +
+            "  -s, --sysv  use System V sum algorithm, use 512 bytes blocks\n";
 
-    public void run(String[] args) {
+    public static void main(String[] args) {
         ChecksumCalculator calculator;
-        boolean sysv = false;
+        boolean useSysV = false;
 
         if (args.length == 0) {
-            printUsageAndExit();
+            System.err.println(USAGE);
+            System.exit(1);
         }
 
         int fileArgStartIndex = 0;
 
-        for (String arg : args) {
-            if (arg.equals("-s") || arg.equals("--sysv")) {
-                sysv = true;
-                fileArgStartIndex++;
-            } else if (arg.equals("-r") || arg.equals("--bsd")) {
-                sysv = false;
-                fileArgStartIndex++;
-            } else {
-                break;
+        label:
+        for (int i = 0; i < args.length; i++) {
+            String arg = args[i];
+            switch (arg) {
+                case "-s":
+                case "--sysv":
+                    useSysV = true;
+                    fileArgStartIndex = i + 1;
+                    break;
+                case "-r":
+                case "--bsd":
+                    useSysV = false;
+                    fileArgStartIndex = i + 1;
+                    break;
+                case "--revision":
+                    System.out.print("Git Revision: ");
+                    break;
+                default:
+                    break label;
             }
         }
 
-        calculator = sysv ? new SysVChecksumCalculator() : new BSDChecksumCalculator();
+        calculator = useSysV ? new SysVChecksumCalculator() : new BSDChecksumCalculator();
 
         try {
             for (int i = fileArgStartIndex; i < args.length; i++) {
-                System.out.println(calculator.calculateChecksumAndBlockSize(args[i]));
+                String file = args[i];
+                System.out.println(calculator.calculateChecksumAndBlockSize(file));
             }
         } catch (IOException e) {
             System.err.println("Error: " + e.getMessage());
             System.exit(1);
         }
-    }
-
-    private void printUsageAndExit() {
-        System.err.println("Usage: java ChecksumCLI [OPTION]... [FILE]...");
-        System.err.println("  -r      use BSD sum algorithm, use 1K blocks");
-        System.err.println("  -s, --sysv  use System V sum algorithm, use 512 bytes blocks");
-        System.exit(1);
     }
 }

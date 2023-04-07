@@ -1,20 +1,41 @@
 #!/bin/bash
 
-
+#Get the Git revision of the jsum script
+revision=$(git rev-parse HEAD)
 
 # Check if Java is installed and if the version is above 1.8
 if ! command -v java >/dev/null 2>&1; then
-    echo "Java is not installed. Please install Java."
-    exit 1
+    echo "Java is not installed. Please install Java version 1.8."
+    read -pr "Do you want to install Java now? [Y/n]: " user_choice
+
+    if [[ "$user_choice" =~ ^[Yy]$ ]]; then
+        # Install Java version 1.8
+        echo "Installing Java version 1.8..."
+        sudo apt-get update
+        sudo apt-get install openjdk-8-jdk
+    else
+        echo "Java version 1.8 was not installed. Exiting installation."
+        exit 1
+    fi
 else
     java_version=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')
     major_version=$(echo "$java_version" | cut -d '.' -f 1)
     minor_version=$(echo "$java_version" | cut -d '.' -f 2)
     patch_version=$(echo "$java_version" | cut -d '.' -f 3)
 
-    if [[ "$major_version" -eq 1 && "$minor_version" -le 8 ]]; then
-        echo "Java version higher than 1.8 is required. Please update Java."
-        exit 1
+    if [[ "$major_version" -eq 1 && "$minor_version" -lt 8 ]]; then
+        echo "Java version 1.8 or higher is required. Please update Java."
+        read -pr "Do you want to update Java now? [Y/n]: " user_choice
+
+        if [[ "$user_choice" =~ ^[Yy]$ ]]; then
+            # Update Java to version 1.8
+            echo "Updating Java to version 1.8..."
+            sudo apt-get update
+            sudo apt-get install openjdk-8-jdk
+        else
+            echo "Java version 1.8 was not installed. Exiting installation."
+            exit 1
+        fi
     else
         echo "Java $major_version.$minor_version.$patch_version is already installed."
     fi
@@ -59,6 +80,23 @@ cp "$jar_file" "$bin_dir"
 cat > "$bin_dir/jsum" <<EOF
 #!/bin/bash
 
+# Get the Git revision of the jsum script
+revision=$(git rev-parse HEAD)
+
+# Parse command line arguments
+while [[ "\$#" -gt 0 ]]; do
+    case \$1 in
+        --revision)
+            echo "Git revision: \$revision"
+            exit 0
+            ;;
+        *)
+            break
+            ;;
+    esac
+    shift
+done
+
 # Run the JAR file with the provided arguments
 java -jar "$bin_dir/$(basename "$jar_file")" "\$@"
 EOF
@@ -78,7 +116,7 @@ fi
 
 # Check if the bin directory is already in the PATH
 if ! grep -q "$bin_dir" "$shell_config"; then
-    echo "export PATH=\"$bin_dir:\$PATH\"" >> "$shell_config"
+    echo "export PATH=""$bin_dir":"$PATH""" >> "$shell_config"
     echo "The 'bin' directory was added to the PATH in $shell_config."
 fi
 
